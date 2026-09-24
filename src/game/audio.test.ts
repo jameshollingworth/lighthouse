@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { roomAudio } from "./audio.ts";
+import { ROOM_AUDIO_AUTO_STARTS_ON_MOVEMENT, roomAudio } from "./audio.ts";
 
 test("each room has the requested ambience and a distinct musical mood", () => {
+  assert.equal(ROOM_AUDIO_AUTO_STARTS_ON_MOVEMENT, true);
   assert.deepEqual(roomAudio.stair.ambience, ["wind"]);
   assert.deepEqual(roomAudio.kitchen.ambience, ["creaking-door"]);
   assert.deepEqual(roomAudio.rocks.ambience, ["waves", "birds"]);
