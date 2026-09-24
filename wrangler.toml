@@ -1,6 +1,8 @@
 name = "lighthouse-adventure"
+main = ".open-next/worker.js"
 compatibility_date = "2026-09-24"
-workers_dev = true
+compatibility_flags = ["nodejs_compat"]
 
 [assets]
-directory = "./dist"
+directory = ".open-next/assets"
+binding = "ASSETS"

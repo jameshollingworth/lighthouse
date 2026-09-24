@@ -1,0 +1,88 @@
+:root {
+  color-scheme: dark;
+  font-family: Georgia, serif;
+  background: #101d25;
+  color: #ece7d9;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  --accent: #8bd5ec;
+  --glow: #234c60;
+  --base: #0c1b28;
+  margin: 0;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 32px 20px;
+  background: var(--base);
+  transition: background-color .36s ease;
+  isolation: isolate;
+}
+
+body[data-theme="stair"] { --accent: #c6b1ee; --glow: #443754; --base: #1a1527; }
+body[data-theme="lamp"] { --accent: #f3ce7f; --glow: #63502a; --base: #272012; }
+body[data-theme="kitchen"] { --accent: #edac97; --glow: #59372f; --base: #281b18; }
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse at top, var(--glow), transparent 75%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+main { width: min(100%, 680px); }
+.eyebrow, .label, footer, button, .map { font-family: system-ui, sans-serif; }
+.eyebrow { color: var(--accent); text-transform: uppercase; letter-spacing: .22em; font-size: 12px; }
+h1 { font-size: clamp(42px, 9vw, 68px); font-weight: normal; margin: 14px 0 10px; }
+.intro { color: #aab9be; font-style: italic; margin-bottom: 36px; }
+.map { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: min(100%, 300px); margin: 12px 0 8px; }
+.map div { position: relative; border: 1px solid #637079; border-radius: 4px; padding: 10px 6px; color: #c5cdd0; font-size: 12px; text-align: center; }
+.map div::before { content: "○"; display: inline-block; width: 16px; }
+.map [aria-current="location"] { color: var(--accent); border: 2px solid var(--accent); padding: 9px 5px; background: #ffffff0d; font-weight: 700; }
+.map [aria-current="location"]::before { content: "●"; }
+.map div:nth-child(odd)::after { content: ""; position: absolute; top: 50%; left: 100%; width: 11px; border-top: 1px solid #637079; }
+.map-key { font: 11px system-ui, sans-serif; color: var(--accent); margin: 0 0 26px; }
+.label { text-transform: uppercase; letter-spacing: .14em; color: #aab9be; font-size: 11px; }
+h2 { font-size: clamp(38px, 7vw, 48px); font-weight: normal; margin: 10px 0 16px; }
+#mood { color: var(--accent); font-style: italic; margin: -4px 0 18px; }
+#scene { border-top: 2px solid var(--accent); padding-top: 18px; }
+#room-image { display: block; width: 100%; height: auto; aspect-ratio: 3 / 2; object-fit: cover; border: 1px solid #465860; border-radius: 4px; background: #20333d; }
+#description { font-size: 19px; line-height: 1.7; min-height: 100px; }
+#exits { color: var(--accent); line-height: 1.6; }
+#message { min-height: 48px; color: #e9b6a1; line-height: 1.5; }
+.controls { display: grid; grid-template-columns: repeat(3, 52px); gap: 6px; justify-content: center; margin: 20px 0; }
+button { background: #20333d; color: #ece7d9; border: 1px solid #52656d; border-radius: 4px; height: 44px; cursor: pointer; font-size: 22px; }
+button:hover { background: #354d58; }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+button:disabled { cursor: wait; }
+button[data-direction="north"] { grid-column: 2; }
+button[data-direction="west"] { grid-column: 1; grid-row: 2; }
+button[data-direction="south"] { grid-column: 2; grid-row: 2; }
+button[data-direction="east"] { grid-column: 3; grid-row: 2; }
+footer { text-align: center; color: #aab9be; font-size: 12px; line-height: 1.8; border-top: 1px solid #354952; padding-top: 20px; }
+
+@media (prefers-reduced-motion: reduce) { body { transition: none; } }
+@media (max-width: 680px) {
+  body { padding-bottom: calc(180px + env(safe-area-inset-bottom, 0px)); }
+  .controls {
+    position: fixed;
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    grid-template-columns: repeat(3, 56px);
+    gap: 8px;
+    margin: 0;
+    padding: 12px;
+    border: 1px solid var(--accent);
+    border-radius: 18px;
+    background: var(--base);
+    box-shadow: 0 8px 32px #0008;
+  }
+  .controls button { height: 52px; font-size: 26px; touch-action: manipulation; }
+  .controls button:active { background: var(--glow); }
+}
