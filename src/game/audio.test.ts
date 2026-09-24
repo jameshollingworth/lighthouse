@@ -7,7 +7,7 @@ test("each room has the requested ambience and a distinct musical mood", () => {
   assert.deepEqual(roomAudio.stair.ambience, ["wind"]);
   assert.deepEqual(roomAudio.kitchen.ambience, ["creaking-door"]);
   assert.deepEqual(roomAudio.rocks.ambience, ["waves", "birds"]);
-  assert.equal(roomAudio.rocks.entryLine, "Who goes there!");
+  assert.equal("entryLine" in roomAudio.rocks, false);
   assert.deepEqual(roomAudio.lamp.ambience, ["rain"]);
 
   const musicMoods = new Set(Object.values(roomAudio).map((room) => room.musicMood));

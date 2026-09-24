@@ -154,7 +154,6 @@ export default function Home() {
       await fade(1, 0);
       setGame(result.state);
       setMessage(result.message);
-      if (!audioMutedRef.current) audioRef.current?.playEntryLine(result.state.room);
       await fade(0, 1);
     } finally {
       if (sceneRef.current) sceneRef.current.style.opacity = "1";
