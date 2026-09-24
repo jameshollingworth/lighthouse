@@ -50,7 +50,7 @@ export class RoomAudioPlayer {
   }
 
   playRoom(room: RoomId) {
-    const config = roomAudio[room];
+    const config = roomAudio[room] ?? { ambience: ["wind"] as Ambience[], musicMood: "mysterious" as MusicMood, root: 110 };
     const layer: RoomLayer = { gain: this.context.createGain(), sources: [], timers: [] };
     layer.gain.gain.value = 0;
     layer.gain.connect(this.master);

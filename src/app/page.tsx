@@ -2,44 +2,35 @@
 
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { availableDirections, initialGameState, move as moveGame, type Direction, type RoomId } from "@/game/movement";
+import { availableDirections, initialGameState, move as moveGame, type Direction, type RoomId, type RoomPosition } from "@/game/movement";
 import { ROOM_AUDIO_AUTO_STARTS_ON_MOVEMENT, RoomAudioPlayer } from "@/game/audio";
 
-interface Room {
+interface Room extends RoomPosition {
   name: string;
-  imageAlt: string;
-  mood: string;
   description: string;
+  exits: Partial<Record<Direction, RoomId>>;
 }
 
-const rooms: Record<RoomId, Room> = {
+const roomAtmosphere: Partial<Record<RoomId, { mood: string; imageAlt: string }>> = {
   stair: {
-    name: "Spiral Stair",
     mood: "Violet shadows · hushed and mysterious",
     imageAlt: "Salt-worn iron stairs spiral around a stone column beside a warmly lit doorway.",
-    description: "An iron staircase curls around a stone column, its steps dusted with salt. Warm light spills through the eastern doorway, while the smell of cold tea drifts up from the kitchen to the south.",
   },
   lamp: {
-    name: "Lamp Room",
     mood: "Golden light · warm and watchful",
     imageAlt: "A glowing glass lighthouse lens overlooks the dark sea at dusk.",
-    description: "A great glass lens turns slowly, casting a golden beam across the dark sea. The Spiral Stair waits to the west, and an iron ladder leads south down to the rocks.",
   },
   kitchen: {
-    name: "Keeper's Kitchen",
     mood: "Ember red · quiet and nostalgic",
     imageAlt: "A chipped mug and open logbook rest on a wooden table beside an old iron stove.",
-    description: "A chipped mug and an open logbook sit on a wooden table beside a cold stove. The Spiral Stair rises to the north, and the eastern door opens onto the wet rocks.",
   },
   rocks: {
-    name: "Rocks",
     mood: "Ocean blue · wild and windswept",
     imageAlt: "Waves break over wet black rocks below the lighthouse's iron ladder and weathered door.",
-    description: "Black rocks glisten beneath your feet as white waves break against the lighthouse. A narrow iron ladder climbs north to the Lamp Room, and a weathered kitchen door stands to the west.",
   },
 };
 
-const roomOrder: RoomId[] = ["stair", "lamp", "kitchen", "rocks"];
+const knownImageRooms = new Set(["stair", "lamp", "kitchen", "rocks"]);
 const directionLabels: Record<Direction, string> = {
   north: "North ↑",
   east: "East →",
@@ -60,6 +51,8 @@ export default function Home() {
   const [audioEnabled, setAudioEnabled] = useState(false);
   const [audioMuted, setAudioMuted] = useState(false);
   const [audioVolume, setAudioVolume] = useState(35);
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [roomsError, setRoomsError] = useState("");
   const audioRef = useRef<RoomAudioPlayer | null>(null);
   const audioMutedRef = useRef(false);
   const currentRoom = game.room;
@@ -75,6 +68,21 @@ export default function Home() {
   }, [currentRoom]);
 
   useEffect(() => () => audioRef.current?.dispose(), []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("/api/rooms", { cache: "no-store", signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Could not load the lighthouse rooms.");
+        return response.json() as Promise<Room[]>;
+      })
+      .then(setRooms)
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        setRoomsError("The rooms could not be loaded. Please try again.");
+      });
+    return () => controller.abort();
+  }, []);
 
   const startAudio = useCallback((room: RoomId) => {
     const AudioContextConstructor = window.AudioContext;
@@ -113,7 +121,7 @@ export default function Home() {
     syncPreference();
     preference.addEventListener("change", syncPreference);
 
-    for (const id of roomOrder) {
+    for (const id of knownImageRooms) {
       const image = new window.Image();
       image.src = `/assets/rooms/${id}.jpg`;
     }
@@ -138,8 +146,8 @@ export default function Home() {
   }, []);
 
   const moveDirection = useCallback(async (direction: Direction) => {
-    if (moving) return;
-    const result = moveGame(game, direction);
+    if (moving || rooms.length === 0) return;
+    const result = moveGame(game, direction, rooms);
     if (result.state === game) {
       setMessage(result.message);
       return;
@@ -159,7 +167,7 @@ export default function Home() {
       if (sceneRef.current) sceneRef.current.style.opacity = "1";
       setMoving(false);
     }
-  }, [currentRoom, fade, game, moving, startAudio]);
+  }, [currentRoom, fade, game, moving, rooms, startAudio]);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -173,7 +181,8 @@ export default function Home() {
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [moveDirection]);
 
-  const room = rooms[currentRoom];
+  const room = rooms.find((item) => item.id === currentRoom);
+  const atmosphere = roomAtmosphere[currentRoom];
 
   return (
     <main>
@@ -184,29 +193,34 @@ export default function Home() {
       </header>
       <div className="label" id="map-label">The lighthouse · N ↑</div>
       <div className="map" role="group" aria-labelledby="map-label">
-        {roomOrder.map((id) => (
-          <div key={id} data-room={id} aria-current={currentRoom === id ? "location" : undefined}>
-            {rooms[id].name === "Keeper's Kitchen" ? "Keeper's Kitchen" : rooms[id].name}
+        {rooms.map((item) => (
+          <div
+            key={item.id}
+            data-room={item.id}
+            aria-current={currentRoom === item.id ? "location" : undefined}
+            style={{ gridColumn: item.gridX + 1, gridRow: item.gridY + 1 }}
+          >
+            {item.name}
           </div>
         ))}
       </div>
       <p className="map-key">● You are here</p>
-      <section id="scene" ref={sceneRef} aria-live="polite" aria-atomic="true">
+      {roomsError ? <p role="alert">{roomsError}</p> : room ? <section id="scene" ref={sceneRef} aria-live="polite" aria-atomic="true">
         <div className="label">You are here</div>
         <h2>{room.name}</h2>
-        <p id="mood">{room.mood}</p>
+        <p id="mood">{atmosphere?.mood ?? "Salt air · quiet and watchful"}</p>
         <Image
           id="room-image"
-          src={`/assets/rooms/${currentRoom}.jpg`}
-          alt={room.imageAlt}
+          src={`/assets/rooms/${knownImageRooms.has(currentRoom) ? currentRoom : "rocks"}.jpg`}
+          alt={atmosphere?.imageAlt ?? `${room.name}, somewhere inside the lighthouse.`}
           width={1536}
           height={1024}
           unoptimized
           priority
         />
         <p id="description">{room.description}</p>
-        <p id="exits">You can go: {availableDirections(game).map((direction) => directionLabels[direction]).join(" · ")}</p>
-      </section>
+        <p id="exits">You can go: {availableDirections(game, rooms).map((direction) => directionLabels[direction]).join(" · ")}</p>
+      </section> : <p role="status">Loading the lighthouse rooms…</p>}
       <p id="message" role="status" aria-live="polite">{message}</p>
       <div className="audio-controls" aria-label="Room audio controls">
         <button type="button" className="audio-toggle" onClick={toggleAudio} aria-pressed={!audioMuted}>
@@ -229,7 +243,7 @@ export default function Home() {
             type="button"
             data-direction={direction}
             aria-label={`Go ${direction}`}
-            disabled={moving}
+            disabled={moving || rooms.length === 0}
             onClick={() => void moveDirection(direction)}
           >
             {{ north: "↑", east: "→", south: "↓", west: "←" }[direction]}

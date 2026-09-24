@@ -6,3 +6,9 @@ compatibility_flags = ["nodejs_compat"]
 [assets]
 directory = ".open-next/assets"
 binding = "ASSETS"
+
+[[d1_databases]]
+binding = "ROOMS_DB"
+database_name = "lighthouse-rooms"
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "migrations"
