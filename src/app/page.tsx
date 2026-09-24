@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { availableDirections, initialGameState, move as moveGame, type Direction, type RoomId } from "@/game/movement";
+import { RoomAudioPlayer } from "@/game/audio";
 
 interface Room {
   name: string;
@@ -56,6 +57,9 @@ export default function Home() {
   const [game, setGame] = useState(initialGameState);
   const [message, setMessage] = useState("");
   const [moving, setMoving] = useState(false);
+  const [audioEnabled, setAudioEnabled] = useState(false);
+  const [audioVolume, setAudioVolume] = useState(35);
+  const audioRef = useRef<RoomAudioPlayer | null>(null);
   const currentRoom = game.room;
   const sceneRef = useRef<HTMLElement>(null);
   const reducedMotionRef = useRef(false);
@@ -63,6 +67,33 @@ export default function Home() {
   useEffect(() => {
     document.body.dataset.theme = currentRoom;
   }, [currentRoom]);
+
+  useEffect(() => {
+    if (audioEnabled) audioRef.current?.playRoom(currentRoom);
+  }, [audioEnabled, currentRoom]);
+
+  useEffect(() => () => audioRef.current?.dispose(), []);
+
+  const toggleAudio = useCallback(async () => {
+    if (audioEnabled) {
+      audioRef.current?.disable();
+      setAudioEnabled(false);
+      return;
+    }
+
+    const AudioContextConstructor = window.AudioContext;
+    if (!AudioContextConstructor) return;
+    const player = audioRef.current ?? new RoomAudioPlayer(new AudioContextConstructor());
+    audioRef.current = player;
+    player.setVolume(audioVolume / 100);
+    await player.enable();
+    setAudioEnabled(true);
+  }, [audioEnabled, audioVolume]);
+
+  const changeAudioVolume = useCallback((value: number) => {
+    setAudioVolume(value);
+    audioRef.current?.setVolume(value / 100);
+  }, []);
 
   useEffect(() => {
     const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -163,6 +194,20 @@ export default function Home() {
         <p id="exits">You can go: {availableDirections(game).map((direction) => directionLabels[direction]).join(" · ")}</p>
       </section>
       <p id="message" role="status" aria-live="polite">{message}</p>
+      <div className="audio-controls" aria-label="Room audio controls">
+        <button type="button" className="audio-toggle" onClick={() => void toggleAudio()} aria-pressed={audioEnabled}>
+          {audioEnabled ? "Mute room audio" : "Play room audio"}
+        </button>
+        <label htmlFor="audio-volume">Volume</label>
+        <input
+          id="audio-volume"
+          type="range"
+          min="0"
+          max="100"
+          value={audioVolume}
+          onChange={(event) => changeAudioVolume(Number(event.target.value))}
+        />
+      </div>
       <nav className="controls" aria-label="Movement controls">
         {(["north", "west", "south", "east"] as Direction[]).map((direction) => (
           <button

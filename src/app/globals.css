@@ -59,6 +59,9 @@ button { background: #20333d; color: #ece7d9; border: 1px solid #52656d; border-
 button:hover { background: #354d58; }
 button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 button:disabled { cursor: wait; }
+.audio-controls { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 8px 0 18px; color: #aab9be; font: 12px system-ui, sans-serif; }
+.audio-controls .audio-toggle { height: 38px; padding: 0 12px; font-size: 13px; }
+.audio-controls input { width: min(140px, 30vw); accent-color: var(--accent); }
 button[data-direction="north"] { grid-column: 2; }
 button[data-direction="west"] { grid-column: 1; grid-row: 2; }
 button[data-direction="south"] { grid-column: 2; grid-row: 2; }
