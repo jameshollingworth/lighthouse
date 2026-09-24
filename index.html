@@ -26,7 +26,7 @@
     .map div:nth-child(odd)::after { content: ''; position: absolute; top: 50%; left: 100%; width: 11px; border-top: 1px solid #637079; }
     .map-key { font: 11px system-ui, sans-serif; color: var(--accent); margin: 0 0 26px; }
     .label { text-transform: uppercase; letter-spacing: .14em; color: #aab9be; font-size: 11px; }
-    h2 { font-size: 32px; font-weight: normal; margin: 10px 0 16px; }
+    h2 { font-size: clamp(38px, 7vw, 48px); font-weight: normal; margin: 10px 0 16px; }
     #mood { color: var(--accent); font-style: italic; margin: -4px 0 18px; }
     #scene { border-top: 2px solid var(--accent); padding-top: 18px; }
     #room-image { display: block; width: 100%; height: auto; aspect-ratio: 3 / 2; object-fit: cover; border: 1px solid #465860; border-radius: 4px; background: #20333d; }
