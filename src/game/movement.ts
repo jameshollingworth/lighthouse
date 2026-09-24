@@ -23,6 +23,8 @@ const exits: Record<RoomId, Partial<Record<Direction, RoomId>>> = {
   rocks: { north: "lamp", west: "kitchen" },
 };
 
+const directionNames: Direction[] = ["north", "east", "south", "west"];
+
 const blocked: Record<RoomId, Partial<Record<Direction, string>>> = {
   stair: { north: "The staircase ends at a solid stone wall.", west: "The curved lighthouse wall blocks your way." },
   lamp: { north: "Thick glass separates you from the open sea.", east: "Beyond the railing is a sheer drop to the waves." },
@@ -36,17 +38,24 @@ export function availableDirections(state: GameState): Direction[] {
   );
 }
 
-export function move(state: GameState, direction: Direction): MovementResult {
-  const destination = exits[state.room][direction];
+export function move(state: GameState, direction: number): MovementResult;
+export function move(state: GameState, direction: Direction): MovementResult;
+export function move(state: GameState, direction: number | Direction): MovementResult {
+  const directionName = typeof direction === "number" ? directionNames[direction] : direction;
+  if (!directionName) {
+    return { state, message: "You cannot go that way." };
+  }
 
-  if (state.room === "rocks" && direction === "north" && !state.visitedKitchen) {
+  const destination = exits[state.room][directionName];
+
+  if (state.room === "rocks" && directionName === "north" && !state.visitedKitchen) {
     return { state, message: "The lamp room door is locked." };
   }
 
   if (!destination) {
     return {
       state,
-      message: blocked[state.room][direction] ?? "You cannot go that way.",
+      message: blocked[state.room][directionName] ?? "You cannot go that way.",
     };
   }
 
