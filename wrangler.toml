@@ -10,5 +10,5 @@ binding = "ASSETS"
 [[d1_databases]]
 binding = "ROOMS_DB"
 database_name = "lighthouse-rooms"
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "1466b02d-b671-4453-9695-257c69d55add"
 migrations_dir = "migrations"
