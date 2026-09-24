@@ -2,6 +2,7 @@ import type { RoomId } from "./movement";
 
 export type Ambience = "wind" | "creaking-door" | "waves" | "birds" | "rain";
 export type MusicMood = "mysterious" | "nostalgic" | "open-sea" | "warm-watchful";
+export const ROOM_AUDIO_AUTO_STARTS_ON_MOVEMENT = true;
 
 export const roomAudio: Record<RoomId, { ambience: Ambience[]; musicMood: MusicMood; root: number }> = {
   stair: { ambience: ["wind"], musicMood: "mysterious", root: 110 },

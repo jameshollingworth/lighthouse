@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { availableDirections, initialGameState, move as moveGame, type Direction, type RoomId } from "@/game/movement";
-import { RoomAudioPlayer } from "@/game/audio";
+import { ROOM_AUDIO_AUTO_STARTS_ON_MOVEMENT, RoomAudioPlayer } from "@/game/audio";
 
 interface Room {
   name: string;
@@ -58,8 +58,10 @@ export default function Home() {
   const [message, setMessage] = useState("");
   const [moving, setMoving] = useState(false);
   const [audioEnabled, setAudioEnabled] = useState(false);
+  const [audioMuted, setAudioMuted] = useState(false);
   const [audioVolume, setAudioVolume] = useState(35);
   const audioRef = useRef<RoomAudioPlayer | null>(null);
+  const audioMutedRef = useRef(false);
   const currentRoom = game.room;
   const sceneRef = useRef<HTMLElement>(null);
   const reducedMotionRef = useRef(false);
@@ -69,26 +71,34 @@ export default function Home() {
   }, [currentRoom]);
 
   useEffect(() => {
-    if (audioEnabled) audioRef.current?.playRoom(currentRoom);
-  }, [audioEnabled, currentRoom]);
+    if (!audioMutedRef.current) audioRef.current?.playRoom(currentRoom);
+  }, [currentRoom]);
 
   useEffect(() => () => audioRef.current?.dispose(), []);
 
-  const toggleAudio = useCallback(async () => {
-    if (audioEnabled) {
-      audioRef.current?.disable();
-      setAudioEnabled(false);
-      return;
-    }
-
+  const startAudio = useCallback((room: RoomId) => {
     const AudioContextConstructor = window.AudioContext;
     if (!AudioContextConstructor) return;
     const player = audioRef.current ?? new RoomAudioPlayer(new AudioContextConstructor());
     audioRef.current = player;
     player.setVolume(audioVolume / 100);
-    await player.enable();
+    void player.enable();
+    player.playRoom(room);
+    audioMutedRef.current = false;
+    setAudioMuted(false);
     setAudioEnabled(true);
-  }, [audioEnabled, audioVolume]);
+  }, [audioVolume]);
+
+  const toggleAudio = useCallback(() => {
+    if (audioEnabled) {
+      audioRef.current?.disable();
+      audioMutedRef.current = true;
+      setAudioMuted(true);
+      setAudioEnabled(false);
+      return;
+    }
+    startAudio(currentRoom);
+  }, [audioEnabled, currentRoom, startAudio]);
 
   const changeAudioVolume = useCallback((value: number) => {
     setAudioVolume(value);
@@ -135,6 +145,10 @@ export default function Home() {
       return;
     }
 
+    if (ROOM_AUDIO_AUTO_STARTS_ON_MOVEMENT && !audioMutedRef.current && !audioRef.current) {
+      startAudio(currentRoom);
+    }
+
     setMoving(true);
     try {
       await fade(1, 0);
@@ -145,7 +159,7 @@ export default function Home() {
       if (sceneRef.current) sceneRef.current.style.opacity = "1";
       setMoving(false);
     }
-  }, [fade, game, moving]);
+  }, [currentRoom, fade, game, moving, startAudio]);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -195,8 +209,8 @@ export default function Home() {
       </section>
       <p id="message" role="status" aria-live="polite">{message}</p>
       <div className="audio-controls" aria-label="Room audio controls">
-        <button type="button" className="audio-toggle" onClick={() => void toggleAudio()} aria-pressed={audioEnabled}>
-          {audioEnabled ? "Mute room audio" : "Play room audio"}
+        <button type="button" className="audio-toggle" onClick={toggleAudio} aria-pressed={!audioMuted}>
+          {audioEnabled ? "Mute room audio" : audioMuted ? "Unmute room audio" : "Play room audio"}
         </button>
         <label htmlFor="audio-volume">Volume</label>
         <input
