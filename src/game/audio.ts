@@ -4,10 +4,10 @@ export type Ambience = "wind" | "creaking-door" | "waves" | "birds" | "rain";
 export type MusicMood = "mysterious" | "nostalgic" | "open-sea" | "warm-watchful";
 export const ROOM_AUDIO_AUTO_STARTS_ON_MOVEMENT = true;
 
-export const roomAudio: Record<RoomId, { ambience: Ambience[]; musicMood: MusicMood; root: number }> = {
+export const roomAudio: Record<RoomId, { ambience: Ambience[]; musicMood: MusicMood; root: number; entryLine?: string }> = {
   stair: { ambience: ["wind"], musicMood: "mysterious", root: 110 },
   kitchen: { ambience: ["creaking-door"], musicMood: "nostalgic", root: 146.83 },
-  rocks: { ambience: ["waves", "birds"], musicMood: "open-sea", root: 98 },
+  rocks: { ambience: ["waves", "birds"], musicMood: "open-sea", root: 98, entryLine: "Who goes there!" },
   lamp: { ambience: ["rain"], musicMood: "warm-watchful", root: 164.81 },
 };
 
@@ -65,6 +65,20 @@ export class RoomAudioPlayer {
       window.setTimeout(() => this.stopLayer(oldLayer), 1800);
     }
     this.current = layer;
+  }
+
+  playEntryLine(room: RoomId) {
+    const line = roomAudio[room].entryLine;
+    if (!line || typeof window === "undefined" || !("speechSynthesis" in window)) return;
+
+    const utterance = new SpeechSynthesisUtterance(line);
+    utterance.lang = "en-GB";
+    utterance.rate = 0.92;
+    utterance.pitch = 0.82;
+    utterance.volume = 1;
+    const britishVoices = window.speechSynthesis.getVoices().filter((voice) => voice.lang.toLowerCase().startsWith("en-gb"));
+    utterance.voice = britishVoices.find((voice) => /\b(daniel|oliver|arthur|male)\b/i.test(voice.name)) ?? britishVoices[0] ?? null;
+    window.speechSynthesis.speak(utterance);
   }
 
   dispose() {
