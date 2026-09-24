@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The Last Light · A tiny adventure</title>
+  <style>
+    :root { color-scheme: dark; font-family: Georgia, serif; background: #101d25; color: #ece7d9; }
+    * { box-sizing: border-box; }
+    body { --accent: #8bd5ec; --glow: #234c60; --base: #0c1b28; margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 32px 20px; background: var(--base); transition: background-color .36s ease; }
+    body[data-theme="stair"] { --accent: #c6b1ee; --glow: #443754; --base: #1a1527; }
+    body[data-theme="lamp"] { --accent: #f3ce7f; --glow: #63502a; --base: #272012; }
+    body[data-theme="kitchen"] { --accent: #edac97; --glow: #59372f; --base: #281b18; }
+    body::before { content: ''; position: fixed; inset: 0; background: radial-gradient(ellipse at top, var(--glow), transparent 75%); pointer-events: none; z-index: -1; }
+    body { isolation: isolate; }
+    main { width: min(100%, 680px); }
+    .eyebrow, .label, footer, button, .map { font-family: system-ui, sans-serif; }
+    .eyebrow { color: var(--accent); text-transform: uppercase; letter-spacing: .22em; font-size: 12px; }
+    h1 { font-size: clamp(42px, 9vw, 68px); font-weight: normal; margin: 14px 0 10px; }
+    .intro { color: #aab9be; font-style: italic; margin-bottom: 36px; }
+    .map { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: min(100%, 300px); margin: 12px 0 8px; }
+    .map div { position: relative; border: 1px solid #637079; border-radius: 4px; padding: 10px 6px; color: #c5cdd0; font-size: 12px; text-align: center; }
+    .map div::before { content: '○'; display: inline-block; width: 16px; }
+    .map [aria-current="location"] { color: var(--accent); border: 2px solid var(--accent); padding: 9px 5px; background: #ffffff0d; font-weight: 700; }
+    .map [aria-current="location"]::before { content: '●'; }
+    .map div:nth-child(odd)::after { content: ''; position: absolute; top: 50%; left: 100%; width: 11px; border-top: 1px solid #637079; }
+    .map-key { font: 11px system-ui, sans-serif; color: var(--accent); margin: 0 0 26px; }
+    .label { text-transform: uppercase; letter-spacing: .14em; color: #aab9be; font-size: 11px; }
+    h2 { font-size: 32px; font-weight: normal; margin: 10px 0 16px; }
+    #mood { color: var(--accent); font-style: italic; margin: -4px 0 18px; }
+    #scene { border-top: 2px solid var(--accent); padding-top: 18px; }
+    #room-image { display: block; width: 100%; height: auto; aspect-ratio: 3 / 2; object-fit: cover; border: 1px solid #465860; border-radius: 4px; background: #20333d; }
+    #description { font-size: 19px; line-height: 1.7; min-height: 100px; }
+    #exits { color: var(--accent); line-height: 1.6; }
+    #message { min-height: 48px; color: #e9b6a1; line-height: 1.5; }
+    .controls { display: grid; grid-template-columns: repeat(3, 52px); gap: 6px; justify-content: center; margin: 20px 0; }
+    button { background: #20333d; color: #ece7d9; border: 1px solid #52656d; border-radius: 4px; height: 44px; cursor: pointer; font-size: 22px; }
+    button:hover { background: #354d58; }
+    button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+    @media (prefers-reduced-motion: reduce) { body { transition: none; } }
+    button[data-direction="north"] { grid-column: 2; }
+    button[data-direction="west"] { grid-column: 1; grid-row: 2; }
+    button[data-direction="south"] { grid-column: 2; grid-row: 2; }
+    button[data-direction="east"] { grid-column: 3; grid-row: 2; }
+    footer { text-align: center; color: #aab9be; font-size: 12px; line-height: 1.8; border-top: 1px solid #354952; padding-top: 20px; }
+  </style>
+  <script src="game.js" defer></script>
+</head>
+<body data-theme="rocks">
+  <main>
+    <header>
+      <p class="eyebrow">A four-room text adventure</p>
+      <h1>The Last Light</h1>
+      <p class="intro">A small lighthouse. An endless sea. Somewhere, a light still burns.</p>
+    </header>
+    <div class="label" id="map-label">The lighthouse · N ↑</div>
+    <div class="map" role="group" aria-labelledby="map-label">
+      <div data-room="stair">Spiral Stair</div>
+      <div data-room="lamp">Lamp Room</div>
+      <div data-room="kitchen">Keeper's Kitchen</div>
+      <div data-room="rocks" aria-current="location">Rocks</div>
+    </div>
+    <p class="map-key">● You are here</p>
+    <section id="scene" aria-live="polite" aria-atomic="true">
+      <div class="label">You are here</div>
+      <h2 id="room-name">Rocks</h2>
+      <p id="mood">Ocean blue · wild and windswept</p>
+      <img id="room-image" src="assets/rooms/rocks.jpg" alt="Waves break over wet black rocks below the lighthouse's iron ladder and weathered door." width="1536" height="1024" decoding="async">
+      <p id="description">Black rocks glisten beneath your feet as white waves break against the lighthouse. A narrow iron ladder climbs north to the Lamp Room, and a weathered kitchen door stands to the west.</p>
+      <p id="exits">You can go: North ↑ · West ←</p>
+    </section>
+    <p id="message" role="status" aria-live="polite"></p>
+    <nav class="controls" aria-label="Movement controls">
+      <button type="button" data-direction="north" aria-label="Go north">↑</button>
+      <button type="button" data-direction="west" aria-label="Go west">←</button>
+      <button type="button" data-direction="south" aria-label="Go south">↓</button>
+      <button type="button" data-direction="east" aria-label="Go east">→</button>
+    </nav>
+    <footer>Use the arrow keys or the buttons to explore.<br>Four rooms. Take your time.</footer>
+    <noscript>This adventure needs JavaScript enabled to move between rooms.</noscript>
+  </main>
+</body>
+</html>
